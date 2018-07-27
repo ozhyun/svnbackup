@@ -6,7 +6,7 @@ LAST_BACKUPED_VERSION="$BACKUP_DIR/VERSION"
 RETVAL=0
 
 usage() {
-	echo $"Usage: $0  <full|incr> "
+	echo $"Usage: $0  <full|incr|rotate> "
 	RETVAL=1
 }
 
@@ -35,6 +35,23 @@ do_full_backup() {
 			echo $repos_name $version >> $BACKUP_DIR/$DATE/VERSION
 			echo $repos_name $version >> $LAST_BACKUPED_VERSION
 			svnadmin hotcopy --clean-logs $dir $BACKUP_DIR/$DATE/$repos_name
+		fi
+	done
+}
+
+# remove the backup created one month ago
+do_rotate() {
+	local MONTH=2592000
+	for dir in $BACKUP_DIR/*
+	do
+		if [ -d $dir ]; then
+			create_time=`date +%s -r $dir`
+			now=`date +%s`
+			diff=$[ $now - $create_time ]
+			if [ $diff -gt $MONTH ]; then
+				echo "$dir change 1 month ago ($diff), remove now"
+				rm -rf $dir
+			fi
 		fi
 	done
 }
@@ -76,7 +93,11 @@ do_incr_backup() {
 			svnadmin dump $dir -r$version_old:$version_now --incremental > $BACKUP_DIR/$DATE/$repos_name.dump
 		fi
 	done
+
+	#remove obsolete backup
+	do_rotate
 }
+
 
 case "$1" in
 	full)
@@ -84,6 +105,9 @@ case "$1" in
 		;;
 	incr)
 		do_incr_backup
+		;;
+	rotate)
+		do_rotate
 		;;
 	*)
 		usage
