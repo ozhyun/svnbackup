@@ -1,10 +1,20 @@
 #!/bin/sh
 
-for dir in /data/repos/*
+MONTH=2592000
+#for dir in /data/repos/*
+for dir in /root/*
 do
 	if [ -d $dir ]; then
-		echo "$dir"
-		grep 'db = ' $dir/conf/svnserve.conf 
+		t=`date +%s -r $dir`
+		now=`date +%s`
+		diff=$[ $now - $t ]
+		if [ $diff -gt $MONTH ]; then
+			echo "$dir change 1 month ago ($diff)"
+		else
+			echo "$dir changed $diff seconds ago"
+		fi
+
+		#grep 'db = ' $dir/conf/svnserve.conf 
 	fi
 done
 
